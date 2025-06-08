@@ -11,7 +11,7 @@
 #define WIDTH 1280
 #define HEIGHT 720
 
-void checkError(cl_int err);
+void clCheckError(cl_int err);
 const char* clErrorString(cl_int err);
 
 int main(void) {
@@ -25,27 +25,27 @@ int main(void) {
 
     // Get platform and device IDs
     err = clGetPlatformIDs(1, &platform, &platformCount);
-    checkError(err);
+    clCheckError(err);
 
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, &deviceCount);
-    checkError(err);
+    clCheckError(err);
 
     // Create OpenCL context
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
-    checkError(err);
+    clCheckError(err);
     // Create Command Queue
     cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
-    checkError(err);
+    clCheckError(err);
 
     // Create output buffer
     outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, WIDTH * HEIGHT * sizeof(cl_uchar4), NULL, &err);
-    checkError(err);
+    clCheckError(err);
 
     char* source = loadProgramSource("julia.cl");
     const size_t source_size = strlen(source);
 
     cl_program program = clCreateProgramWithSource(context, 1, &source, &source_size, &err);
-    checkError(err);
+    clCheckError(err);
 
     err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
     if (err != CL_SUCCESS) {
@@ -62,7 +62,7 @@ int main(void) {
     }
 
     cl_kernel kernel = clCreateKernel(program, "julia", &err);
-    checkError(err);
+    clCheckError(err);
     // Set Kernel Arguments
     const int width = WIDTH;
     const int height = HEIGHT;
@@ -87,14 +87,14 @@ int main(void) {
     };
 
     err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalWorkSize, localWorkSize, 0, NULL, &kernelEvent);
-    checkError(err);
+    clCheckError(err);
 
     clWaitForEvents(1, &kernelEvent);
 
     // Read output buffer
     uint8_t* imageData = malloc(WIDTH * HEIGHT * 4 * sizeof(uint8_t));
     err = clEnqueueReadBuffer(queue, outputBuffer, CL_TRUE, 0, WIDTH * HEIGHT * sizeof(cl_uchar4), imageData, 0, NULL, NULL);
-    checkError(err);
+    clCheckError(err);
 
     stbi_write_png("julia.png", WIDTH, HEIGHT, 4, imageData, WIDTH * 4);
 
@@ -109,7 +109,7 @@ int main(void) {
     return 0;
 }
 
-void checkError(const cl_int err) {
+void clCheckError(const cl_int err) {
     if (err != CL_SUCCESS) {
         printf("%s\n", clErrorString(err));
         assert(0);
