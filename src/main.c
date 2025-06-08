@@ -11,8 +11,8 @@
 #define WIDTH 1280
 #define HEIGHT 720
 
-void clCheckError(cl_int err);
-const char* clErrorString(cl_int err);
+static void clCheckError(cl_int err);
+static const char* clErrorString(cl_int err);
 
 int main(void) {
     cl_int err = 0;
@@ -109,14 +109,14 @@ int main(void) {
     return 0;
 }
 
-void clCheckError(const cl_int err) {
+static void clCheckError(const cl_int err) {
     if (err != CL_SUCCESS) {
         printf("%s\n", clErrorString(err));
         assert(0);
     }
 }
 
-const char* clErrorString(const cl_int err) {
+static const char* clErrorString(const cl_int err) {
     const char* errStr = "Unknown OpenCL error";
 
     switch (err) {
