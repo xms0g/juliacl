@@ -10,8 +10,7 @@ find_package(OpenCL REQUIRED)
 
 set(STB_IMAGE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb_image/include)
 
-add_executable(${PROJECT_NAME} src/main.c
-        src/io.c src/io.h)
+add_executable(${PROJECT_NAME} src/main.c)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenCL::OpenCL)
 

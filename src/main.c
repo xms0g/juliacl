@@ -6,11 +6,11 @@
 #endif
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
-#include "io.h"
 
 #define WIDTH 1280
 #define HEIGHT 720
 
+static char* loadProgramSource(const char* filename);
 static void clCheckError(cl_int err);
 static const char* clErrorString(cl_int err);
 
@@ -107,6 +107,21 @@ int main(void) {
     free(source);
     free(imageData);
     return 0;
+}
+
+static char* loadProgramSource(const char* filename) {
+    FILE* kernelFile = fopen(filename, "r");
+
+    fseek(kernelFile, 0, SEEK_END);
+    const size_t source_size = ftell(kernelFile);
+    fseek(kernelFile, 0, SEEK_SET);
+
+    char* source = malloc(source_size + 1);
+    fread(source, 1, source_size, kernelFile);
+    source[source_size] = '\0';
+    fclose(kernelFile);
+
+    return source;
 }
 
 static void clCheckError(const cl_int err) {
