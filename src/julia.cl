@@ -39,7 +39,6 @@ __kernel void julia(__global uchar4* output,
         (uchar)(255.0f * sqrt((float)iter / MAX_ITER)),
         (uchar)(255.0f * pow((float)iter / MAX_ITER, 0.3f)),
         255);
-    }
 
     output[y * width + x] = color;
 }
