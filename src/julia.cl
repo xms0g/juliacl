@@ -34,15 +34,11 @@ __kernel void julia(__global uchar4* output,
         im = newIm;
     }
     
-    uchar4 color;
-    if (iter == MAX_ITER) {
-        color = (uchar4)(0, 0, 0, 255);
-    } else {
-        color = (uchar4)(
-            (uchar)(255.0f * iter / MAX_ITER),
-            (uchar)(255.0f * sqrt((float)iter / MAX_ITER)), 
-            (uchar)(255.0f * pow((float)iter / MAX_ITER, 0.3f)),
-            255);
+    uchar4 color = (uchar4)(
+        (uchar)(255.0f * iter / MAX_ITER),
+        (uchar)(255.0f * sqrt((float)iter / MAX_ITER)),
+        (uchar)(255.0f * pow((float)iter / MAX_ITER, 0.3f)),
+        255);
     }
 
     output[y * width + x] = color;
