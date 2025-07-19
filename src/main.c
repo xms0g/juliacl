@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, WIDTH * HEIGHT * sizeof(cl_uchar4), NULL, &err);
     CHECK_ERROR(err)
 
-    char* source = loadProgramSource("julia.cl");
+    char* source = loadProgramSource("../src/julia.cl");
     const size_t source_size = strlen(source);
 
     cl_program program = clCreateProgramWithSource(context, 1, &source, &source_size, &err);

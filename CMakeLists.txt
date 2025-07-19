@@ -3,9 +3,6 @@ project(juliacl C)
 
 set(CMAKE_C_STANDARD 11)
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/julia.cl
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 find_package(OpenCL REQUIRED)
 
 set(STB_IMAGE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb_image/include)
