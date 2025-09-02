@@ -10,9 +10,19 @@
 #define WIDTH 1280
 #define HEIGHT 720
 
-#define CHECK_ERROR(err) if (err != CL_SUCCESS) { printf("%s\n", clErrorString(err)); goto error; }
+#define CHECK_ERROR(err) if (err != CL_SUCCESS) { printf("%s\n", clErrorString(err)); release(); return 1; }
+
+static cl_event kernelEvent;
+static cl_kernel kernel;
+static cl_program program;
+static cl_context context;
+static cl_command_queue queue;
+static cl_mem outputBuffer;
+static uint8_t* imageData;
+static char* source;
 
 static char* loadProgramSource(const char* filename);
+static void release();
 static const char* clErrorString(cl_int err);
 
 int main(int argc, char** argv) {
@@ -21,8 +31,6 @@ int main(int argc, char** argv) {
     cl_platform_id platform;
     cl_uint platformCount;
     cl_uint deviceCount;
-    cl_mem outputBuffer;
-    cl_event kernelEvent;
 
     // Get platform and device IDs
     err = clGetPlatformIDs(1, &platform, &platformCount);
@@ -32,20 +40,20 @@ int main(int argc, char** argv) {
     CHECK_ERROR(err)
 
     // Create OpenCL context
-    cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
+    context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
     CHECK_ERROR(err)
     // Create Command Queue
-    cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
+    queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
     CHECK_ERROR(err)
 
     // Create output buffer
     outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, WIDTH * HEIGHT * sizeof(cl_uchar4), NULL, &err);
     CHECK_ERROR(err)
 
-    char* source = loadProgramSource("../src/julia.cl");
+    source = loadProgramSource("../src/julia.cl");
     const size_t source_size = strlen(source);
 
-    cl_program program = clCreateProgramWithSource(context, 1, &source, &source_size, &err);
+    program = clCreateProgramWithSource(context, 1, &source, &source_size, &err);
     CHECK_ERROR(err)
 
     err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
@@ -54,16 +62,17 @@ int main(int argc, char** argv) {
         size_t log_size;
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
         // Allocate memory for the log
-        char* log = (char*) malloc(log_size + 1);
+        char* log = malloc(log_size + 1);
         // Get the log
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, (void*) log, NULL);
         // Print the log
         printf("%s\n", log);
         free(log);
-        goto error;
+        release();
+        return 1;
     }
 
-    cl_kernel kernel = clCreateKernel(program, "julia", &err);
+    kernel = clCreateKernel(program, "julia", &err);
     CHECK_ERROR(err)
     // Set Kernel Arguments
     const int width = WIDTH;
@@ -94,21 +103,13 @@ int main(int argc, char** argv) {
     clWaitForEvents(1, &kernelEvent);
 
     // Read output buffer
-    uint8_t* imageData = malloc(WIDTH * HEIGHT * 4 * sizeof(uint8_t));
+    imageData = malloc(WIDTH * HEIGHT * 4 * sizeof(uint8_t));
     err = clEnqueueReadBuffer(queue, outputBuffer, CL_TRUE, 0, WIDTH * HEIGHT * sizeof(cl_uchar4), imageData, 0, NULL, NULL);
     CHECK_ERROR(err)
 
     stbi_write_png("julia.png", WIDTH, HEIGHT, 4, imageData, WIDTH * 4);
 
-error:
-    clReleaseEvent(kernelEvent);
-    clReleaseKernel(kernel);
-    clReleaseProgram(program);
-    clReleaseMemObject(outputBuffer);
-    clReleaseCommandQueue(queue);
-    clReleaseContext(context);
-    free(source);
-    free(imageData);
+    release();
     return 0;
 }
 
@@ -125,6 +126,17 @@ static char* loadProgramSource(const char* filename) {
     fclose(kernelFile);
 
     return source;
+}
+
+void release() {
+    clReleaseEvent(kernelEvent);
+    clReleaseKernel(kernel);
+    clReleaseProgram(program);
+    clReleaseMemObject(outputBuffer);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(context);
+    free(source);
+    free(imageData);
 }
 
 static const char* clErrorString(const cl_int err) {
